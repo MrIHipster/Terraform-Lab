@@ -1,13 +1,13 @@
 provider "google" {
-  project = "Terraform slyvka"
-  zone    = "europe-west1-b"
+  project = "terraform-slyvka"
+  zone    = "europe-west2-a"
 }
 
 resource "google_compute_network" "nat-example" {
   name = "nat-example"
   mtu  = 1460
   auto_create_subnetworks = false
-  project = "Terraform slyvka"
+  project = "terraform-slyvka"
   routing_mode = "REGIONAL"
 }
 
@@ -16,7 +16,7 @@ resource "google_compute_network" "nat-example" {
 resource "google_compute_subnetwork" "some-subnet" {
   name          = "some-subnet"
   ip_cidr_range = "10.0.1.0/24"
-  region        = "europe-west1"
+  region        = "europe-west2"
   network       = google_compute_network.nat-example.id
 }
 
@@ -65,13 +65,13 @@ resource "google_compute_firewall" "allow-ssh-iap" {
 resource "google_compute_instance" "example-instance" {
   name         = "example-instance"
   machine_type = "f1-micro"
-  zone         = "europe-west1-b"
+  zone         = "europe-west2-a"
 
   tags = ["no-ip", "allow-ssh"]
 
   boot_disk {
     initialize_params {
-      image = "centos-7/centos-cloud"
+      image = "https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20210217"
     }
   }
 
@@ -85,7 +85,7 @@ resource "google_compute_instance" "example-instance" {
 resource "google_compute_instance" "nat-gateway" {
   name         = "nat-gateway"
   machine_type = "f1-micro"
-  zone         = "europe-west1-b"
+  zone         = "europe-west2-a"
 
   can_ip_forward  = true
 
@@ -93,7 +93,7 @@ resource "google_compute_instance" "nat-gateway" {
 
   boot_disk {
     initialize_params {
-      image = "centos-7/centos-cloud"
+      image = "https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20210217"
     }
   }
 
@@ -108,16 +108,13 @@ resource "google_compute_instance" "nat-gateway" {
   	startup-script = "#! /bin/bash sudo sh -c \"echo 1 > /proc/sys/net/ipv4/ip_forward\" sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"
   }
 }
-
-
-
 resource "google_compute_route" "no-ip-internet-route" {
   name        = "no-ip-internet-route"
   dest_range  = "0.0.0.0/0"
   network     = google_compute_network.nat-example.name
   
   next_hop_instance = "nat-gateway"
-  next_hop_instance_zone = "europe-west1-b"
+  next_hop_instance_zone = "europe-west2-a"
 
   tags = ["no-ip"]
 
